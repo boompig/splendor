@@ -1,6 +1,7 @@
+from __future__ import print_function
 from cards import card_list
 import copy
-from Queue import PriorityQueue
+from queue import PriorityQueue
 import time
 from collections import deque
 
@@ -13,10 +14,11 @@ class State:
         self.num_cards = 0
         self.cards = []
 
-    def is_equal(self, other):
-        return (self.money == other.money and \
-                self.points == other.points and \
-                self.turn == other.turn)
+    def __hash__(self):
+        # sum of all the different things
+        # points are always < 100
+        # money is always <= 10, so < 100
+        return self.money + (self.points * 100) + (self.turn * 100 * 100)
 
 
 def can_take_money(current_state):
@@ -79,53 +81,58 @@ def bfs(starting_state):
                 open_list.append(next_state)
     return (None, num_states)
 
-def a_star(starting_state, heuristic):
+def bfs_with_visited(starting_state):
+    visited = set([])
     num_states = 0
     if is_goal_state(starting_state):
         num_states += 1
-        return starting_state, num_states
-    # sorted by value of heuristic, lowest to highest
-    pq = PriorityQueue()
-    t = (heuristic(starting_state), starting_state)
-    pq.put(t)
-    while not pq.empty():
-        _, state = pq.get()
-        # not a goal state, already examined
+        return (starting_state, num_states)
+    h = hash(starting_state)
+    #print("Adding %d to visited" % h)
+    visited.add(h)
+    open_list = deque([starting_state])
+    while len(open_list) > 0:
+        state = open_list.popleft()
+        # we know it's not a goal because was checked before
         for next_state in get_successor_states(state):
             num_states += 1
             if is_goal_state(next_state):
-                return next_state, num_states
+                return (next_state, num_states)
             else:
-                t = (heuristic(next_state), next_state)
-                pq.put(t)
-    return None, num_states
+                h = hash(next_state)
+                if h not in visited:
+                    #print("Adding %d to visited" % h)
+                    visited.add(h)
+                    open_list.append(next_state)
+    return (None, num_states)
 
 
 def search():
     starting_state = State(money=0, points=0, turn=0)
-
+    
     # BFS
-    print "starting BFS..."
+    #search_algo_name = "pure BFS"
+    #search_algo = bfs
+
+    # BFS with visited
+    search_algo_name = "BFS with visited set"
+    search_algo = bfs_with_visited
+
+    print("starting search with algorithm '%s'..." % search_algo_name)
     start_time = time.time()
-    final_state, num_states = bfs(starting_state)
+    final_state, num_states = search_algo(starting_state)
     elapsed_time = time.time() - start_time
 
-    # A*
-    #def heuristic(state):
-    #    return 15 - state.points
-    #print "starting A*..."
-    #final_state, num_turns, num_states = a_star(starting_state)
-
-    print "Elapsed time = %.2f seconds" % elapsed_time
-    print "Examined %d states" % num_states
+    print("Elapsed time = %.2f seconds" % elapsed_time)
+    print("Examined %d states" % num_states)
 
     if final_state:
-        print "Found optimal strategy which takes %d turns" % final_state.turn
-        print "Won with the following cards"
+        print("Found optimal strategy which takes %d turns" % final_state.turn)
+        print("Won with the following cards")
         for idx, card in enumerate(final_state.cards):
-            print "%d. %s" % (idx + 1, str(card))
+            print("%d. %s" % (idx + 1, str(card)))
     else:
-        print "Did not find goal state"
+        print("Did not find goal state")
 
 
 if __name__ == "__main__":

@@ -1,9 +1,21 @@
 from __future__ import print_function
-from cards import card_list
 import copy
 from queue import PriorityQueue
 import time
 from collections import deque
+
+from cards import card_list, RED, GREEN, BLUE, WHITE, BLACK
+from nobles import noble_list
+
+"""
+Simplifying assumptions:
+    * money is treated as if it can be applied to any color cost
+    * no ability to grab 2 of a single type of money
+    * no ability to reserve cards
+
+    * some cards missing
+    * some nobles missing
+"""
 
 
 class State:
@@ -13,6 +25,41 @@ class State:
         self.turn = turn
         self.num_cards = 0
         self.cards = []
+        # indices of nobles
+        self.nobles = set([])
+
+    def add_card(self, card, card_index):
+        """Add the card. Do not deduct cost, this is done somewhere else"""
+        self.cards.append(card)
+        self.check_nobles()
+
+    def get_card_cost(self, target_card):
+        cost = copy.deepcopy(target_card.cost)
+        for card in self.cards:
+            cost[card.color] = max(0, cost[card.color] - 1)
+        return cost
+
+    def get_color_distribution(self):
+        """Return current color distribution of cards"""
+        color_distribution = {
+            RED: 0,
+            GREEN: 0,
+            BLUE: 0,
+            WHITE: 0,
+            BLACK: 0
+        }
+        for card in self.cards:
+            color_distribution[card.color] += 1
+        return color_distribution
+
+    def check_nobles(self):
+        """Add all nobles which apply to noble set. Also update points"""
+        color_distribution = self.get_color_distribution()
+        for idx, noble in enumerate(noble_list):
+            if noble.noble_applies(color_distribution):
+                if idx not in self.nobles:
+                    self.nobles.add(idx)
+                    self.points += points
 
     def __hash__(self):
         # sum of all the different things
@@ -21,8 +68,22 @@ class State:
         return self.money + (self.points * 100) + (self.turn * 100 * 100)
 
 
+def print_cards(state):
+    for idx, card in enumerate(state.cards):
+        print("%d. %s" % (idx + 1, str(card)))
+
+
+def print_nobles(state):
+    if len(state.nobles) == 0:
+        print("No nobles")
+    for idx, noble_index in enumerate(state.nobles):
+        noble = noble_list[noble_index]
+        print("%d. %s" % (idx + 1, str(noble)))
+
+
 def can_take_money(current_state):
     return current_state.money <= 7
+
 
 def change_state_take_money(current_state):
     """Return new state resulting in taking money in the current state.
@@ -33,19 +94,24 @@ def change_state_take_money(current_state):
     new_state.turn += 1
     return new_state
 
-def can_afford_card(current_state, card):
-    return current_state.money >= card.cost
+def total_cost(card):
+    return sum([amt for color, amt in card.cost.items()])
 
-def change_state_buy_card(current_state, card):
+def can_afford_card(current_state, card):
+    return current_state.money >= total_cost(card)
+
+def change_state_buy_card(current_state, card, card_index):
     """Return new state resulting in buying the given card from the given state
     Assume that this is a legal action. Do not alter given state"""
     # given that can afford card in current state
     new_state = copy.deepcopy(current_state)
     new_state.num_cards += 1
-    new_state.money -= card.cost
+    card_cost = current_state.get_card_cost(card)
+    card_cost_abs = sum([amt for color, amt in card_cost.items()])
+    new_state.money -= card_cost_abs
     new_state.points += card.points
     new_state.turn += 1
-    new_state.cards.append(card)
+    new_state.add_card(card, card_index)
     return new_state
 
 def get_successor_states(current_state):
@@ -53,9 +119,9 @@ def get_successor_states(current_state):
     if can_take_money(current_state):
         s1 = change_state_take_money(current_state)
         yield s1
-    for card in card_list:
+    for card_index, card in enumerate(card_list):
         if can_afford_card(current_state, card):
-            s = change_state_buy_card(current_state, card)
+            s = change_state_buy_card(current_state, card, card_index)
             yield s
 
 def is_goal_state(state):
@@ -106,7 +172,6 @@ def bfs_with_visited(starting_state):
                     open_list.append(next_state)
     return (None, num_states)
 
-
 def search():
     starting_state = State(money=0, points=0, turn=0)
     
@@ -128,9 +193,10 @@ def search():
 
     if final_state:
         print("Found optimal strategy which takes %d turns" % final_state.turn)
-        print("Won with the following cards")
-        for idx, card in enumerate(final_state.cards):
-            print("%d. %s" % (idx + 1, str(card)))
+        print("Won with the following cards:")
+        print_cards(final_state)
+        print("Won with the following nobles:")
+        print_nobles(final_state)
     else:
         print("Did not find goal state")
 

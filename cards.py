@@ -1,9 +1,40 @@
+from collections import namedtuple
+
 from colors import RED, GREEN, BLUE, WHITE, BLACK, color_to_string
+
+ImmutableCard = namedtuple("Card",
+        ["id", "points", "color", "cost"])
+
+def create_card(id, points, color, total_cost,
+    red_cost, green_cost, blue_cost, white_cost, black_cost):
+    """total_cost is for debugging. This is using immutable cards.
+    Using immutable cards is far slower."""
+    # error-checking
+    cost_dict = {
+        RED: red_cost,
+        GREEN: green_cost,
+        BLUE: blue_cost,
+        WHITE: white_cost,
+        BLACK: black_cost
+    }
+    try:
+        assert(cost_dict[RED] + cost_dict[GREEN] + cost_dict[BLUE] +
+                cost_dict[WHITE] + cost_dict[BLACK] == total_cost)
+    except AssertionError as e:
+        print("Cost error check failed for card %s" % repr(self))
+        raise e
+
+    return ImmutableCard(
+        id = id,
+        cost = cost_dict,
+        points = points,
+        color = color
+    )
+
 
 class Card(object):
     def __init__(self, id, total_cost, points, color,
-            red_cost, green_cost, blue_cost, white_cost,
-            black_cost):
+            red_cost, green_cost, blue_cost, white_cost, black_cost):
         """total_cost is for debugging"""
         self.id = id
         self.cost = {
@@ -37,7 +68,6 @@ class Card(object):
                 self.id, color_to_string(self.color),
                 self.cost_string(), self.points)
 
-# there are different distributions for gems
 card_list = [
     # Level 1
     # card type 1
@@ -78,14 +108,24 @@ card_list = [
     Card(id=35, color=BLACK, total_cost=3, points=0,
         red_cost=0, green_cost=3, blue_cost=0, white_cost=0, black_cost=0),
 
-    #TODO card type 8
+    # card type 9
+    Card(id=26, color=BLACK, total_cost=4, points=1,
+        white_cost=0, blue_cost=4, green_cost=0, red_cost=0, black_cost=0),
+    Card(id=27, color=BLUE, total_cost=4, points=1,
+        white_cost=0, blue_cost=0, green_cost=0, red_cost=4, black_cost=0),
+    Card(id=28, color=WHITE, total_cost=4, points=1,
+        white_cost=0, blue_cost=0, green_cost=4, red_cost=0, black_cost=0),
+    Card(id=29, color=GREEN, total_cost=4, points=1,
+        white_cost=0, blue_cost=0, green_cost=0, red_cost=0, black_cost=4),
+    Card(id=30, color=RED, total_cost=4, points=1,
+        white_cost=4, blue_cost=0, green_cost=0, red_cost=0, black_cost=0),
 
     # Level 2
 
     # card type 9
     Card(id=101, color=RED, total_cost=7, points=1,
         red_cost=2, green_cost=0, blue_cost=0, white_cost=2, black_cost=3),
-    # green has type 1 and 2 reversed in table
+    # green has type 1 and 2 reversed in table (for level 2)
     Card(id=102, color=GREEN, total_cost=7, points=1,
         red_cost=0, green_cost=0, blue_cost=3, white_cost=2, black_cost=2),
     Card(id=103, color=BLUE, total_cost=7, points=1,
@@ -104,8 +144,17 @@ card_list = [
 
     # Level 3
 
-    #TODO card type 15
-    #Card(color=RED, total_cost=14, points=3),
+    # card type 15
+    Card(id=201, color=RED, total_cost=14, points=3,
+        red_cost=0, green_cost=3, blue_cost=5, white_cost=3, black_cost=3),
+    Card(id=202, color=GREEN, total_cost=14, points=3,
+        red_cost=3, green_cost=0, blue_cost=3, white_cost=5, black_cost=3),
+    Card(id=203, color=BLUE, total_cost=14, points=3,
+        red_cost=3, green_cost=3, blue_cost=0, white_cost=3, black_cost=5),
+    Card(id=204, color=WHITE, total_cost=14, points=3,
+        red_cost=5, green_cost=3, blue_cost=3, white_cost=0, black_cost=3),
+    Card(id=205, color=BLACK, total_cost=14, points=3,
+        red_cost=3, green_cost=5, blue_cost=3, white_cost=3, black_cost=0),
 
     # card type 16
     Card(id=206, color=RED, total_cost=7, points=4,
@@ -131,7 +180,15 @@ card_list = [
     Card(id=215, color=BLACK, total_cost=12, points=0,
         red_cost=6, green_cost=3, blue_cost=0, white_cost=0, black_cost=3),
 
-    #TODO card types 18-19
-    #Card(color=RED, total_cost=12, points=4),
-    #Card(color=RED, total_cost=10, points=5)
+    # card type 18
+    Card(id=216, color=RED, total_cost=10, points=5,
+        red_cost=3, green_cost=7, blue_cost=0, white_cost=0, black_cost=0),
+    Card(id=217, color=GREEN, total_cost=10, points=5,
+        red_cost=0, green_cost=3, blue_cost=7, white_cost=0, black_cost=0),
+    Card(id=218, color=BLUE, total_cost=10, points=5,
+        red_cost=0, green_cost=0, blue_cost=3, white_cost=7, black_cost=0),
+    Card(id=219, color=WHITE, total_cost=10, points=5,
+        red_cost=0, green_cost=0, blue_cost=0, white_cost=3, black_cost=7),
+    Card(id=220, color=BLACK, total_cost=10, points=5,
+        red_cost=7, green_cost=0, blue_cost=0, white_cost=0, black_cost=3),
 ]

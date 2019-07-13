@@ -5,8 +5,12 @@ import time
 from collections import deque, namedtuple
 import pdb
 import itertools
+import pickle
+import sys
+import random
 
-from cards import card_list, RED, GREEN, BLUE, WHITE, BLACK
+from colors import RED, GREEN, BLUE, WHITE, BLACK, color_to_string
+from cards import card_list
 from nobles import noble_list
 
 """
@@ -23,6 +27,13 @@ search_options = {
     "print_progress": True,
     "progress_granularity": 100000
 }
+
+game_options = {
+    "card_list": card_list,
+    "noble_list": noble_list
+}
+
+POINT_THRESHOLD = 12
 
 def get_money_permutations():
     all_colors = [RED, GREEN, BLUE, WHITE, BLACK]
@@ -76,10 +87,10 @@ def check_nobles(card_set, noble_set):
     """Add all nobles which apply to noble set. Return resulting point bonus"""
     points_bonus = 0
     color_distribution = get_color_distribution(card_set)
-    for idx, noble in enumerate(noble_list):
+    for noble in game_options["noble_list"]:
         if noble.noble_applies(color_distribution):
             if idx not in noble_set:
-                noble_set.add(idx)
+                noble_set.add(noble.index)
                 points_bonus += noble.points
     return points_bonus
 
@@ -94,7 +105,7 @@ def get_card_cost(state, target_card):
     return cost
 
 class State:
-    __slots__ = ["points", "turn", "money", "cards", "nobles"]
+    #__slots__ = ["points", "turn", "money", "cards", "nobles"]
     def __init__(self, points: int, turn: int, cards, nobles, money):
         # map from color to amt
         self.money = money
@@ -110,8 +121,14 @@ class State:
         # because cards determine nobles
         self.nobles = nobles
 
+def print_money(state):
+    print("Money:")
+    for color in state.money:
+        print("{} -> {}".format(color_to_string(color), state.money[color]))
 
 def print_cards(state):
+    if len(state.cards) == 0:
+        print("No cards")
     for idx, card_index in enumerate(state.cards):
         card = card_list[card_index]
         print("%d. %s" % (idx + 1, str(card)))
@@ -239,13 +256,13 @@ def get_successor_states(current_state):
         for money_diff in money_permutations:
             s = change_state_take_money(current_state, money_diff)
             yield s
-    for card_index, card in enumerate(card_list):
-        if can_buy_card(current_state, card, card_index):
-            s = change_state_buy_card(current_state, card, card_index)
+    for card in game_options["card_list"]:
+        if can_buy_card(current_state, card, card.index):
+            s = change_state_buy_card(current_state, card, card.index)
             yield s
 
 def is_goal_state(state):
-    return state.points >= 6
+    return state.points >= POINT_THRESHOLD
 
 def bfs(starting_state):
     """Given starting state, conduct BFS until find the goal state.
@@ -296,9 +313,28 @@ def bfs_with_visited(starting_state):
                 print("Number of expanded states=%d" % num_states)
     return (None, num_states)
 
-def search():
+
+def print_state(state):
+    print("State (turn={}, points={})".format(state.turn, state.points))
+    print_money(state)
+    print_cards(state)
+    print_nobles(state)
+
+def draw_cards():
+    """Limit cards in the game to just 12 and applicable nobles to 5"""
+    game_options["card_list"] = []
+    for level in range(1, 4):
+        cards = [card for card in card_list if card.level == level]
+        card_sample = random.sample(cards, 4)
+        game_options["card_list"].extend(card_sample)
+    noble_sample = random.sample(noble_list, 5)
+    game_options["noble_list"] = noble_sample
+
+def search(fname=None):
     search_options["immutable_state"] = False
     search_options["print_progress"] = True
+
+    # create a subset of cards in card_list
 
     starting_money = {
         RED: 0,
@@ -307,14 +343,23 @@ def search():
         WHITE: 0,
         BLACK: 0
     }
-    if search_options["immutable_state"]:
-        starting_state = ImmutableState(
-            money=starting_money, points=0, turn=0,
-            cards=frozenset([]), nobles=frozenset([])
-        )
+    if fname:
+        with open(fname, "rb") as fp:
+            starting_state = pickle.load(fp)
+        print("Loaded initial state from file:")
+        print_state(starting_state)
     else:
-        starting_state = State(money=starting_money, points=0, turn=0,
-                cards=[], nobles=[])
+        if search_options["immutable_state"]:
+            starting_state = ImmutableState(
+                money=starting_money, points=0, turn=0,
+                cards=frozenset([]), nobles=frozenset([])
+            )
+        else:
+            starting_state = State(money=starting_money, points=0, turn=0,
+                    cards=[], nobles=[])
+    #TODO for now
+    draw_cards()
+    print("Running with points threshold of %d" % POINT_THRESHOLD)
 
     # BFS
     #search_algo_name = "pure BFS"
@@ -338,9 +383,23 @@ def search():
         print_cards(final_state)
         print("Won with the following nobles:")
         print_nobles(final_state)
+        user_input = None
+        while user_input not in ["y", "n"]:
+            user_input = input("Save state? (y/n) ")
+        if user_input == "y":
+            fname = "state_%d.data" % POINT_THRESHOLD
+            with open(fname, "wb") as fp:
+                pickle.dump(final_state, fp)
+            print("Wrote to file %s" % fname)
+        else:
+            print("OK, not saving")
     else:
         print("Did not find goal state")
 
 
 if __name__ == "__main__":
-    search()
+    if len(sys.argv) > 1:
+        fname = sys.argv[1]
+        search(fname)
+    else:
+        search()

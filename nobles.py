@@ -44,5 +44,17 @@ noble_list = [
     Noble(points=3, total_amt=8,
         red_amt=4, green_amt=0, blue_amt=0, white_amt=0, black_amt=4),
 
-    #TODO nobles of type 2
+    # nobles of type 2
+    Noble(points=3, total_amt=9,
+        red_amt=3, green_amt=0, blue_amt=0, white_amt=3, black_amt=3),
+    Noble(points=3, total_amt=9,
+        red_amt=3, green_amt=3, blue_amt=3, white_amt=0, black_amt=0),
+    Noble(points=3, total_amt=9,
+        red_amt=0, green_amt=3, blue_amt=3, white_amt=3, black_amt=0),
+    Noble(points=3, total_amt=9,
+        red_amt=0, green_amt=0, blue_amt=3, white_amt=3, black_amt=3),
+    Noble(points=3, total_amt=9,
+        red_amt=3, green_amt=3, blue_amt=0, white_amt=0, black_amt=3),
 ]
+for idx, noble in enumerate(noble_list):
+    noble.index = idx

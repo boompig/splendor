@@ -1,9 +1,7 @@
 from __future__ import print_function
 import copy
-from queue import PriorityQueue
 import time
 from collections import deque, namedtuple
-import pdb
 import itertools
 import pickle
 import sys
@@ -89,9 +87,9 @@ def check_nobles(card_set, noble_set):
     color_distribution = get_color_distribution(card_set)
     for noble in game_options["noble_list"]:
         if noble.noble_applies(color_distribution):
-            if idx not in noble_set:
-                noble_set.add(noble.index)
-                points_bonus += noble.points
+            # if idx not in noble_set:
+            noble_set.add(noble.index)
+            points_bonus += noble.points
     return points_bonus
 
 def has_card(state, card, card_index):

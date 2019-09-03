@@ -1,4 +1,4 @@
-import copy
+# import copy
 # command line
 
 cheap_card = {
@@ -32,7 +32,7 @@ class Player(object):
             self.money += 3
             return True
         except AssertionError:
-            print "too much money!"
+            print("too much money!")
             return False
 
     def buy_card(self, type):
@@ -43,12 +43,12 @@ class Player(object):
         elif type == "pricy":
             card = pricy_card
         else:
-            print "error: invalid type: %s" % type
+            print("error: invalid type: %s" % type)
             return
         try:
             assert(self.money >= card["cost"])
         except AssertionError:
-            print "error: cannot afford"
+            print("error: cannot afford")
             return
         self.cards[type] += 1
         self.points += card["points"]
@@ -62,13 +62,13 @@ class Player(object):
         elif type == "pricy":
             card = pricy_card
         else:
-            print "error: invalid type: %s" % type
+            print("error: invalid type: %s" % type)
             return False
         return self.money >= card["cost"]
 
     def print_cards(self):
         for card_type, amt in self.cards.iteritems():
-            print "%s -> %d" % (card_type, amt)
+            print("%s -> %d" % (card_type, amt))
 
 
 def buy_card(player, card_type):
@@ -76,18 +76,18 @@ def buy_card(player, card_type):
         if player.can_buy_card(card_type):
             player.buy_card(card_type)
             player.print_cards()
-            print "points now at %d" % player.points
-            print "money now at %d" % player.money
+            print("points now at %d" % player.points)
+            print("money now at %d" % player.money)
             return True
         else:
-            print "Error: cannot afford card type %s" % card_type
+            print("Error: cannot afford card type %s" % card_type)
             return False
     else:
         return False
 
 def take_money(player):
     success = player.take_money()
-    print "money now at %d" % player.money
+    print("money now at %d" % player.money)
     return success
 
 if __name__ == "__main__":
@@ -95,7 +95,7 @@ if __name__ == "__main__":
     finished = False
     turn = 1
     while (not finished) and player.points < 15:
-        user_input = raw_input("[turn %d] command> " % turn)
+        user_input = input("[turn %d] command> " % turn)
         if user_input == "money":
             success = take_money(player)
             if success:
@@ -104,7 +104,7 @@ if __name__ == "__main__":
             try:
                 card_type = user_input.split(" ")[1]
             except IndexError:
-                print "Error: card type not specified"
+                print("Error: card type not specified")
                 continue
             try:
                 assert(card_type in player.cards)
@@ -112,14 +112,14 @@ if __name__ == "__main__":
                 if success:
                     turn += 1
             except AssertionError:
-                print "Error: unrecognized card type: %s" % card_type
-                print "Valid types: %s" % ", ".join([k for k in player.cards])
+                print("Error: unrecognized card type: %s" % card_type)
+                print("Valid types: %s" % ", ".join([k for k in player.cards]))
                 continue
         elif user_input == "quit" or user_input == "exit":
             finished = True
         else:
-            print "Error: unknown command: %s" % user_input
+            print("Error: unknown command: %s" % user_input)
     if player.points >= 15:
-        print "Game over, player won"
+        print("Game over, player won")
     else:
-        print "Goodbye"
+        print("Goodbye")

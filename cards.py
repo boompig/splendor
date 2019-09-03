@@ -21,7 +21,7 @@ def create_card(id, points, color, total_cost,
         assert(cost_dict[RED] + cost_dict[GREEN] + cost_dict[BLUE] +
                 cost_dict[WHITE] + cost_dict[BLACK] == total_cost)
     except AssertionError as e:
-        print("Cost error check failed for card %s" % repr(self))
+        print("Cost error check failed for card %s" % repr(id))
         raise e
     return ImmutableCard(
         id = id,

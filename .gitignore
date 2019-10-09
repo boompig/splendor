@@ -1,1 +1,7 @@
+# python
 *.pyc
+env
+
+# editor
+.vscode
+*.code-workspace

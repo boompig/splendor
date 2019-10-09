@@ -1,14 +1,20 @@
 from __future__ import print_function
-import copy
-import time
-from collections import deque, namedtuple
-import itertools
-import pickle
-import sys
-import random
 
-from colors import RED, GREEN, BLUE, WHITE, BLACK, color_to_string
+import copy
+import itertools
+import logging
+import os
+import pickle
+import random
+import time
+from argparse import ArgumentParser
+from collections import deque, namedtuple
+from typing import Optional
+
+import coloredlogs
+
 from cards import card_list
+from colors import BLACK, BLUE, GREEN, RED, WHITE, color_to_string
 from nobles import noble_list
 
 """
@@ -33,6 +39,10 @@ game_options = {
 
 POINT_THRESHOLD = 12
 
+
+logger = logging.getLogger(__name__)
+
+
 def get_money_permutations():
     all_colors = [RED, GREEN, BLUE, WHITE, BLACK]
     for color_list in itertools.combinations(all_colors, 3):
@@ -51,6 +61,7 @@ money_permutations = list(get_money_permutations())
 ImmutableState = namedtuple("ImmutableState",
         ["money", "points", "turn", "cards", "nobles"])
 
+
 def hash_state(state):
     if search_options["immutable_state"]:
         card_hash = str(sorted(state.cards))
@@ -67,6 +78,7 @@ def hash_state(state):
         t = (money_hash, state.points, state.turn, card_hash)
         return hash(t)
 
+
 def get_color_distribution(card_set):
     """Return current color distribution of cards"""
     color_distribution = {
@@ -81,6 +93,7 @@ def get_color_distribution(card_set):
         color_distribution[card.color] += 1
     return color_distribution
 
+
 def check_nobles(card_set, noble_set):
     """Add all nobles which apply to noble set. Return resulting point bonus"""
     points_bonus = 0
@@ -94,6 +107,7 @@ def check_nobles(card_set, noble_set):
 
 def has_card(state, card, card_index):
     return card_index in state.cards
+
 
 def get_card_cost(state, target_card):
     cost = copy.copy(target_card.cost)
@@ -124,12 +138,14 @@ def print_money(state):
     for color in state.money:
         print("{} -> {}".format(color_to_string(color), state.money[color]))
 
+
 def print_cards(state):
     if len(state.cards) == 0:
         print("No cards")
     for idx, card_index in enumerate(state.cards):
         card = card_list[card_index]
         print("%d. %s" % (idx + 1, str(card)))
+
 
 def print_nobles(state):
     if len(state.nobles) == 0:
@@ -138,16 +154,20 @@ def print_nobles(state):
         noble = noble_list[noble_index]
         print("%d. %s" % (idx + 1, str(noble)))
 
+
 def count_money(current_state):
     return sum([amt for color, amt in current_state.money.items()])
 
+
 def can_take_money(current_state):
     return count_money(current_state) <= 7
+
 
 def apply_money_diff(money_dict, diff):
     for color in money_dict:
         if color in diff:
             money_dict[color] += diff[color]
+
 
 def change_state_take_money(current_state, money_diff):
     """Return new state resulting in taking money in the current state.
@@ -173,6 +193,7 @@ def change_state_take_money(current_state, money_diff):
         )
     return new_state
 
+
 def can_afford_card(current_state, card):
     card_cost = get_card_cost(current_state, card)
     for color in current_state.money:
@@ -180,12 +201,15 @@ def can_afford_card(current_state, card):
             return False
     return True
 
+
 def absolute_card_cost(card_cost):
     return sum([amt for color, amt in card_cost.items()])
+
 
 def deduct_cost(money_dict, card_cost_dict):
     for color in card_cost_dict:
         money_dict[color] -= card_cost_dict[color]
+
 
 def change_state_buy_card_immutable(current_state, card, card_index):
     # mapping from color to cost, taking into account discounts
@@ -196,7 +220,7 @@ def change_state_buy_card_immutable(current_state, card, card_index):
     # no need to do crazy copy, this was just a frozenset of ints before
     new_nobles = set(current_state.nobles)
     new_money_dict = copy.copy(current_state.money)
-    new_cards.append(card_index)
+    new_cards.add(card_index)
     deduct_cost(new_money_dict, card_cost)
     # also adds nobles to nobles set
     if len(new_cards) >= 8:
@@ -210,6 +234,7 @@ def change_state_buy_card_immutable(current_state, card, card_index):
         nobles = frozenset(new_nobles)
     )
     return new_state
+
 
 def change_state_buy_card_mutable(current_state, card, card_index):
     # mapping from color to cost, taking into account discounts
@@ -259,8 +284,10 @@ def get_successor_states(current_state):
             s = change_state_buy_card(current_state, card, card.index)
             yield s
 
+
 def is_goal_state(state):
     return state.points >= POINT_THRESHOLD
+
 
 def bfs(starting_state):
     """Given starting state, conduct BFS until find the goal state.
@@ -282,8 +309,9 @@ def bfs(starting_state):
                 open_list.append(next_state)
             if(search_options["print_progress"] and\
                     num_states % search_options["progress_granularity"] == 0):
-                print("Number of expanded states=%d" % num_states)
+                logger.debug("Number of expanded states=%d" % num_states)
     return (None, num_states)
+
 
 def bfs_with_visited(starting_state):
     visited = set([])
@@ -318,6 +346,7 @@ def print_state(state):
     print_cards(state)
     print_nobles(state)
 
+
 def draw_cards():
     """Limit cards in the game to just 12 and applicable nobles to 5"""
     game_options["card_list"] = []
@@ -328,9 +357,11 @@ def draw_cards():
     noble_sample = random.sample(noble_list, 5)
     game_options["noble_list"] = noble_sample
 
-def search(fname=None):
+def search(output_dir: str, fname: Optional[str] = None):
     search_options["immutable_state"] = False
     search_options["print_progress"] = True
+
+    logger.debug("Using output directory %s", output_dir)
 
     # create a subset of cards in card_list
 
@@ -385,7 +416,7 @@ def search(fname=None):
         while user_input not in ["y", "n"]:
             user_input = input("Save state? (y/n) ")
         if user_input == "y":
-            fname = "state_%d.data" % POINT_THRESHOLD
+            fname = os.path.join(output_dir, "state_%d.data" % POINT_THRESHOLD)
             with open(fname, "wb") as fp:
                 pickle.dump(final_state, fp)
             print("Wrote to file %s" % fname)
@@ -396,8 +427,26 @@ def search(fname=None):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1:
-        fname = sys.argv[1]
-        search(fname)
-    else:
-        search()
+    parser = ArgumentParser()
+    parser.add_argument("filename", nargs="?")
+    parser.add_argument("-t", "--threshold", type=int, default=12,
+                        help="Points threshold for search")
+    parser.add_argument("-d", "--output-dir", default=os.path.join(os.getcwd(), "state_data"),
+                        help="Output directory")
+    parser.add_argument("-v", "--verbose", default=False, action="store_true")
+    args = parser.parse_args()
+
+    log_level = (logging.DEBUG if args.verbose else logging.INFO)
+    logger.setLevel(log_level)
+    coloredlogs.install(level=log_level)
+
+    if not os.path.exists(args.output_dir):
+        logging.debug("Created output directory %s", args.output_dir)
+        os.makedirs(args.output_dir)
+
+    POINT_THRESHOLD = args.threshold
+
+    search(
+        output_dir=args.output_dir,
+        fname=args.filename
+    )

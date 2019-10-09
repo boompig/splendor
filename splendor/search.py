@@ -26,13 +26,10 @@ Simplifying assumptions:
 search_options = {
     "immutable_state": False,
     "print_progress": True,
-    "progress_granularity": 100000
+    "progress_granularity": 100000,
 }
 
-game_options = {
-    "card_list": card_list,
-    "noble_list": noble_list
-}
+game_options = {"card_list": card_list, "noble_list": noble_list}
 
 POINT_THRESHOLD = 12
 
@@ -45,15 +42,17 @@ def get_money_permutations():
             d[color] = 1
         yield d
     for color in all_colors:
-        d = { color: 2 }
+        d = {color: 2}
         yield d
+
 
 # these are static so don't have to compute them every time
 money_permutations = list(get_money_permutations())
 
 # immutable object!
-ImmutableState = namedtuple("ImmutableState",
-        ["money", "points", "turn", "cards", "nobles"])
+ImmutableState = namedtuple(
+    "ImmutableState", ["money", "points", "turn", "cards", "nobles"]
+)
 
 
 def hash_state(state):
@@ -61,9 +60,9 @@ def hash_state(state):
         card_hash = str(sorted(state.cards))
         money_hash = str(sorted(state.money.items()))
         # I wonder if this is entirely legit...
-        #card_hash = hash(state.cards)
-        #nobles_hash = hash(state.nobles)
-        #t = (state.money, state.points, state.turn, card_hash, nobles_hash)
+        # card_hash = hash(state.cards)
+        # nobles_hash = hash(state.nobles)
+        # t = (state.money, state.points, state.turn, card_hash, nobles_hash)
         t = (money_hash, state.points, state.turn, card_hash)
         return hash(t)
     else:
@@ -75,13 +74,7 @@ def hash_state(state):
 
 def get_color_distribution(card_set):
     """Return current color distribution of cards"""
-    color_distribution = {
-        RED: 0,
-        GREEN: 0,
-        BLUE: 0,
-        WHITE: 0,
-        BLACK: 0
-    }
+    color_distribution = {RED: 0, GREEN: 0, BLUE: 0, WHITE: 0, BLACK: 0}
     for card_id in card_set:
         card = card_list[card_id]
         color_distribution[card.color] += 1
@@ -99,6 +92,7 @@ def check_nobles(card_set, noble_set):
             points_bonus += noble.points
     return points_bonus
 
+
 def has_card(state, card, card_index):
     return card_index in state.cards
 
@@ -110,8 +104,9 @@ def get_card_cost(state, target_card):
         cost[card.color] = max(0, cost[card.color] - 1)
     return cost
 
+
 class State:
-    #__slots__ = ["points", "turn", "money", "cards", "nobles"]
+    # __slots__ = ["points", "turn", "money", "cards", "nobles"]
     def __init__(self, points: int, turn: int, cards, nobles, money):
         # map from color to amt
         self.money = money
@@ -126,6 +121,7 @@ class State:
         # we don't need to explicitly keep track of these here
         # because cards determine nobles
         self.nobles = nobles
+
 
 def print_money(state):
     print("Money:")
@@ -174,7 +170,7 @@ def change_state_take_money(current_state, money_diff):
             points=current_state.points,
             turn=current_state.turn + 1,
             cards=current_state.cards,
-            nobles=current_state.nobles
+            nobles=current_state.nobles,
         )
     else:
         # no need to copy lists/sets because they are not modified
@@ -183,7 +179,7 @@ def change_state_take_money(current_state, money_diff):
             points=current_state.points,
             turn=current_state.turn + 1,
             cards=current_state.cards,
-            nobles=current_state.nobles
+            nobles=current_state.nobles,
         )
     return new_state
 
@@ -221,11 +217,11 @@ def change_state_buy_card_immutable(current_state, card, card_index):
         # only check nobles conditionally, because it is a slow op
         points_bonus += check_nobles(new_cards, new_nobles)
     new_state = ImmutableState(
-        money = new_money_dict,
-        points = current_state.points + points_bonus,
-        turn = current_state.turn + 1,
-        cards = frozenset(new_cards),
-        nobles = frozenset(new_nobles)
+        money=new_money_dict,
+        points=current_state.points + points_bonus,
+        turn=current_state.turn + 1,
+        cards=frozenset(new_cards),
+        nobles=frozenset(new_nobles),
     )
     return new_state
 
@@ -247,13 +243,14 @@ def change_state_buy_card_mutable(current_state, card, card_index):
         # only check nobles conditionally, because it is a slow op
         points_bonus += check_nobles(new_cards, new_nobles)
     new_state = State(
-        money = new_money_dict,
-        points = current_state.points + points_bonus,
-        turn = current_state.turn + 1,
-        cards = new_cards,
-        nobles = new_nobles
+        money=new_money_dict,
+        points=current_state.points + points_bonus,
+        turn=current_state.turn + 1,
+        cards=new_cards,
+        nobles=new_nobles,
     )
     return new_state
+
 
 def change_state_buy_card(current_state, card, card_index):
     """Return new state resulting in buying the given card from the given state
@@ -263,9 +260,12 @@ def change_state_buy_card(current_state, card, card_index):
     else:
         return change_state_buy_card_mutable(current_state, card, card_index)
 
+
 def can_buy_card(current_state, card, card_index):
-    return (can_afford_card(current_state, card) and\
-            not has_card(current_state, card, card_index))
+    return can_afford_card(current_state, card) and not has_card(
+        current_state, card, card_index
+    )
+
 
 def get_successor_states(current_state):
     """Generator over successor states"""
@@ -301,8 +301,10 @@ def bfs(starting_state):
                 return (next_state, num_states)
             else:
                 open_list.append(next_state)
-            if(search_options["print_progress"] and\
-                    num_states % search_options["progress_granularity"] == 0):
+            if (
+                search_options["print_progress"]
+                and num_states % search_options["progress_granularity"] == 0
+            ):
                 logging.debug("Number of expanded states=%d" % num_states)
     return (None, num_states)
 
@@ -328,8 +330,10 @@ def bfs_with_visited(starting_state):
                 if h not in visited:
                     visited.add(h)
                     open_list.append(next_state)
-            if(search_options["print_progress"] and\
-                    num_states % search_options["progress_granularity"] == 0):
+            if (
+                search_options["print_progress"]
+                and num_states % search_options["progress_granularity"] == 0
+            ):
                 logging.debug("Number of expanded states=%d", num_states)
     return (None, num_states)
 
@@ -351,6 +355,7 @@ def draw_cards():
     noble_sample = random.sample(noble_list, 5)
     game_options["noble_list"] = noble_sample
 
+
 def search(output_dir: str, fname: Optional[str] = None):
     search_options["immutable_state"] = False
     search_options["print_progress"] = True
@@ -359,13 +364,7 @@ def search(output_dir: str, fname: Optional[str] = None):
 
     # create a subset of cards in card_list
 
-    starting_money = {
-        RED: 0,
-        GREEN: 0,
-        BLUE: 0,
-        WHITE: 0,
-        BLACK: 0
-    }
+    starting_money = {RED: 0, GREEN: 0, BLUE: 0, WHITE: 0, BLACK: 0}
     if fname:
         with open(fname, "rb") as fp:
             starting_state = pickle.load(fp)
@@ -374,19 +373,23 @@ def search(output_dir: str, fname: Optional[str] = None):
     else:
         if search_options["immutable_state"]:
             starting_state = ImmutableState(
-                money=starting_money, points=0, turn=0,
-                cards=frozenset([]), nobles=frozenset([])
+                money=starting_money,
+                points=0,
+                turn=0,
+                cards=frozenset([]),
+                nobles=frozenset([]),
             )
         else:
-            starting_state = State(money=starting_money, points=0, turn=0,
-                    cards=[], nobles=[])
-    #TODO for now
+            starting_state = State(
+                money=starting_money, points=0, turn=0, cards=[], nobles=[]
+            )
+    # TODO for now
     draw_cards()
     print("Running with points threshold of %d" % POINT_THRESHOLD)
 
     # BFS
-    #search_algo_name = "pure BFS"
-    #search_algo = bfs
+    # search_algo_name = "pure BFS"
+    # search_algo = bfs
 
     # BFS with visited
     search_algo_name = "BFS with visited set"

@@ -1,34 +1,22 @@
 # import copy
 # command line
 
-cheap_card = {
-    "cost": 4,
-    "points": 1
-}
+cheap_card = {"cost": 4, "points": 1}
 
-medium_card = {
-    "cost": 7,
-    "points": 2
-}
+medium_card = {"cost": 7, "points": 2}
 
-pricy_card = {
-    "cost": 12,
-    "points": 5
-}
+pricy_card = {"cost": 12, "points": 5}
+
 
 class Player(object):
     def __init__(self):
-        self.cards = {
-            "cheap": 0,
-            "medium": 0,
-            "pricy": 0
-        }
+        self.cards = {"cheap": 0, "medium": 0, "pricy": 0}
         self.points = 0
         self.money = 0
 
     def take_money(self):
-        try :
-            assert(self.money <= 7)
+        try:
+            assert self.money <= 7
             self.money += 3
             return True
         except AssertionError:
@@ -46,7 +34,7 @@ class Player(object):
             print("error: invalid type: %s" % type)
             return
         try:
-            assert(self.money >= card["cost"])
+            assert self.money >= card["cost"]
         except AssertionError:
             print("error: cannot afford")
             return
@@ -85,10 +73,12 @@ def buy_card(player, card_type):
     else:
         return False
 
+
 def take_money(player):
     success = player.take_money()
     print("money now at %d" % player.money)
     return success
+
 
 if __name__ == "__main__":
     player = Player()
@@ -107,7 +97,7 @@ if __name__ == "__main__":
                 print("Error: card type not specified")
                 continue
             try:
-                assert(card_type in player.cards)
+                assert card_type in player.cards
                 success = buy_card(player, card_type)
                 if success:
                     turn += 1

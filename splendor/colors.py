@@ -17,4 +17,4 @@ def color_to_string(color):
     elif color == BLACK:
         return "BLACK"
     else:
-        assert(False)
+        assert False

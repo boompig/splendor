@@ -1,12 +1,14 @@
 from collections import namedtuple
 
-from colors import RED, GREEN, BLUE, WHITE, BLACK, color_to_string
+from .colors import RED, GREEN, BLUE, WHITE, BLACK, color_to_string
 
 ImmutableCard = namedtuple("Card",
         ["id", "points", "color", "cost"])
 
-def create_card(id, points, color, total_cost,
-    red_cost, green_cost, blue_cost, white_cost, black_cost):
+
+def create_card(id: int, points: int, color: int, total_cost: int,
+                red_cost: int, green_cost: int, blue_cost: int,
+                white_cost: int, black_cost: int):
     """total_cost is for debugging. This is using immutable cards.
     Using immutable cards is far slower."""
     # error-checking
@@ -46,6 +48,8 @@ class Card(object):
         self.points = points
         self.color = color
         self.level = level
+
+        self.index = -1
 
         # error-checking
         try:

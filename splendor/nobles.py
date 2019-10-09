@@ -1,10 +1,14 @@
-from colors import RED, GREEN, BLUE, WHITE, BLACK
+from .colors import RED, GREEN, BLUE, WHITE, BLACK
 
 class Noble:
-    def __init__(self, points, total_amt,
-        red_amt, green_amt, blue_amt, white_amt, black_amt):
+    def __init__(self, points: int, total_amt: int,
+                 red_amt: int, green_amt: int,
+                 blue_amt: int, white_amt: int,
+                 black_amt: int):
         """total_amt is used for error-checking"""
         self.points = points
+
+        self.index = -1
 
         self.color_amounts = {
             RED: red_amt,

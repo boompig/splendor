@@ -1,11 +1,13 @@
 # About
 
-This is a simplified search for the card game splendor.
+This is a simplified search for the card game/board game [Splendor](https://boardgamegeek.com/boardgame/148228/splendor).
 The state is drastically simplified to try to find some approximation of a working solution.
 
 # How to Run
 
-* run `search.py`, which conducts the search and displays results
+`python -m splendor`, which conducts the search and displays results
+
+The `--help` option displays additional options
 
 ## Search Speed
 
